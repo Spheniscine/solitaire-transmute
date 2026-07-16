@@ -1,6 +1,7 @@
 use dioxus::prelude::*;
 
 mod game;
+mod components;
 
 const FAVICON: Asset = asset!("/assets/favicon.ico");
 
