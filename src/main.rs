@@ -1,5 +1,7 @@
 use dioxus::prelude::*;
 
+mod game;
+
 const FAVICON: Asset = asset!("/assets/favicon.ico");
 
 // altered version of KaTeX_Main to include filled "red" suits
