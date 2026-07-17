@@ -126,6 +126,27 @@ impl Board {
         );
     }
 
+    /// prereq: EngineIns are filled with 1 card each, and EngineOut is empty
+    pub fn do_combine(&mut self) {
+        use DepotRole::*;
+        self.selected = None;
+        let card1 = self.depots[EngineIn.id(0)].pop().unwrap();
+        let card2 = self.depots[EngineIn.id(1)].pop().unwrap();
+        self.animation_acts.push(
+            AnimationAct::Combine { cards: [card1, card2], rev: false }
+        );
+    }
+
+    /// prereq: EngineOut has 1 card, and EngineIns are empty
+    pub fn undo_combine(&mut self, card1: Card, card2: Card) {
+        use DepotRole::*;
+        self.selected = None;
+        self.depots[EngineOut.id(0)].clear();
+        self.animation_acts.push(
+            AnimationAct::Combine { cards: [card1, card2], rev: true }
+        );
+    }
+
     pub fn advance_actions(&mut self) {
         use DepotRole::*;
         for act in self.animation_acts.drain(..) {
