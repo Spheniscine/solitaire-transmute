@@ -102,7 +102,7 @@ impl<'de> Deserialize<'de> for Card {
         impl<'de> Visitor<'de> for MyVisitor {
             type Value = Card;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                write!(formatter, "suit code, one of characters CHDS")
+                write!(formatter, "card code")
             }
             fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
                 where
