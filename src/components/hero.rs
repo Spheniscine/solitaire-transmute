@@ -1,18 +1,58 @@
+use async_std::stream::StreamExt;
 use dioxus::prelude::*;
 use glam::Vec2;
 
-use crate::{components::CardComponent, game::{Card, Skin, Suit}};
+use crate::{components::{BoardComponent, CardComponent}, game::{ANIMATION_DURATION, AnimationKey, Card, GameState, ScreenState, Skin, Suit}};
 
 #[component]
 pub fn Hero() -> Element {
-    let mut skin = Skin::default();
-    // skin.suits = crate::game::SuitSkin::Traditional;
+    let mut state = use_signal(|| {
+        // if let Some(mut state) = LocalStorage.load_game_state() {
+        //     state.board.selected = None;
+        //     state.screen_state = ScreenState::Game;
+        //     return state;
+        // }
+        GameState::init()
+    });
+
+    let confetti_counter = use_memo(move || {
+        state.read().num_wins
+    });
+    use_effect(move || {
+        let _ = confetti_counter.read();
+        document::eval("confetti();");
+    });
+
+    let st = state.read();
+    let clean = !st.is_busy(); // interactions should test this before write()-ing to state, to prevent slowdowns
+
+    let animate_timer = use_coroutine(move |mut rx: UnboundedReceiver<AnimationKey>| async move {
+        while let Some(key) = rx.next().await {
+            async_std::task::sleep(ANIMATION_DURATION).await;
+            state.write().advance_animations(key);
+        }
+    });
+
+    if st.is_acting() {
+        animate_timer.send(st.animation_key);
+    }
+
     rsx! {
-        CardComponent { 
-            position: Vec2::new(10., 10.),
-            width: 11.,
-            card: Card { rank: 26, suit: Suit::Wild },
-            skin,
+        div {
+            id: "hero",
+            class: "select-none",
+            // if st.screen_state == ScreenState::Game {
+            //     BoardComponent { 
+            //         position: Vec2 { x: 0., y: 20. },
+            //         board: st.board.clone(),
+            //         skin: st.skin,
+            //         // onclick: move |pos| if clean {state.write().onclick(pos);},
+            //         // ondoubleclick: move |pos| if clean {state.write().ondoubleclick(pos);},
+            //         // oncontextmenu: move |pos| if clean {state.write().oncontextmenu(pos);},
+            //         animation_key: st.animation_key,
+            //         is_won: st.is_won(),
+            //     }
+            // }
         }
     }
 }

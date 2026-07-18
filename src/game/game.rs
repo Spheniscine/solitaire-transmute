@@ -119,4 +119,37 @@ impl GameState {
             DepotRole::EngineOut => slice.len() <= 1,
         }
     }
+
+    pub fn is_won(&self) -> bool {
+        self.board.depots[DepotRole::Foundation.id(0)].len() == 26
+    }
+
+    pub fn is_over(&self) -> bool {
+        self.is_won()
+    }
+
+    pub fn check_auto_moves(&mut self) {
+        if self.is_busy() { return; }
+        if self.is_over() { return; }
+
+        // todo
+    }
+
+    pub fn advance_animations(&mut self, key: AnimationKey) {
+        if key != self.animation_key { return; }
+        self.animation_key = self.animation_key.wrapping_add(1);
+        
+        self.board.advance_actions();
+
+        if self.is_won() {
+            if !self.already_won {
+                self.num_wins += 1;
+                self.already_won = true;
+            }
+        } else {
+            self.check_auto_moves();
+        }
+
+        // if !self.is_busy() { LocalStorage.save_game_state(&self); }
+    }
 }
