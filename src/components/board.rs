@@ -29,6 +29,34 @@ fn Circle(
 }
 
 #[component]
+fn Triangle(
+    position: Vec2,
+    size: f32,
+    stroke: f32,
+) -> Element {
+    let stroke_width = stroke / size;
+    let height_ratio = (3f64.sqrt() / 2.) as f32;
+
+    let y1 = stroke_width / 2.;
+    let y2 = height_ratio - y1;
+
+    rsx! {
+        svg {
+            style: "position: absolute; left: {rem(position.x)}; top: {rem(position.y)}; width: {rem(size)};",
+            view_box: "0 0 1 {height_ratio}",
+            xmlns: "http://www.w3.org/2000/svg",
+
+            polygon {
+                points: "0.5,{y1} {1.-y1},{y2} {y1},{y2}",
+                stroke: CARD_FRAME_DEFAULT_COLOR,
+                stroke_width,
+                fill: "transparent",
+            }
+        }
+    }
+}
+
+#[component]
 pub fn BoardComponent(
     position: Vec2,
     board: Board,
@@ -118,6 +146,21 @@ pub fn BoardComponent(
         }
     };
 
+    let triangle_decor = {
+        let size = card_width * 2. + spacer_x - 0.6;
+        let position = Vec2::new(
+            get_pos(DepotRole::EngineIn.id(0), 0).x + 0.25,
+            get_pos(DepotRole::EngineOut.id(0), 0).y + 2.,
+        );
+        
+        rsx! {
+            Triangle { 
+                position,
+                size, stroke,
+            }
+        }
+    };
+
     let moving_card = |p1: Vec2, p2: Vec2, card: Card| rsx! {
         Movement {
             src_translate_vec: p1 - p2,
@@ -178,6 +221,7 @@ pub fn BoardComponent(
             left: rem(position.x),
 
             {circle_decor},
+            {triangle_decor},
 
             for depot in 0..NUM_DEPOTS {
                 if let Some(hint) = get_hint(depot) {
