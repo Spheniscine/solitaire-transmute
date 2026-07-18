@@ -58,6 +58,5 @@ fn App() -> Element {
         }
         document::Script { src: CONFETTI_JS }
         Hero {}
-
     }
 }
