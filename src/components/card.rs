@@ -117,12 +117,14 @@ pub fn BaseCardComponent<C: PartialEq + Clone + 'static, S: SkinTrait<C> + 'stat
     }
 }
 
+pub const CARD_FRAME_DEFAULT_COLOR: &str = "#aaa";
+
 #[component]
 pub fn CardFrame(
     position: Vec2,
     width: f32,
     hint: Option<Element>,
-    #[props(default = "#aaa".to_string())] color: String,
+    #[props(default = CARD_FRAME_DEFAULT_COLOR.to_string())] color: String,
     onclick: EventHandler<MouseEvent>,
     oncontextmenu: EventHandler<MouseEvent>,
 ) -> Element {

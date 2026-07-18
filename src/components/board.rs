@@ -1,7 +1,32 @@
 use dioxus::prelude::*;
 use glam::Vec2;
 
-use crate::{components::{CARD_BORDER_RADIUS_RATIO, CARD_HEIGHT_RATIO, CardComponent, CardFrame, Movement, SkinTrait, rem}, game::{AnimationAct, AnimationKey, Board, BoardPos, Card, DepotRole, NUM_DEPOTS, Skin, Suit}};
+use crate::{components::{CARD_BORDER_RADIUS_RATIO, CARD_FRAME_DEFAULT_COLOR, CARD_HEIGHT_RATIO, CardComponent, CardFrame, Movement, SkinTrait, rem}, game::{AnimationAct, AnimationKey, Board, BoardPos, Card, DepotRole, NUM_DEPOTS, Skin, Suit}};
+
+#[component]
+fn Circle(
+    position: Vec2,
+    size: f32,
+    stroke: f32,
+) -> Element {
+    let stroke_width = stroke / size;
+    rsx! {
+        svg {
+            style: "position: absolute; left: {rem(position.x)}; top: {rem(position.y)}; width: {rem(size)}; height: {rem(size)};",
+            view_box: "0 0 1 1",
+            xmlns: "http://www.w3.org/2000/svg",
+
+            circle {
+                cx: 0.5,
+                cy: 0.5,
+                r: 0.5 - stroke_width / 2.,
+                stroke: CARD_FRAME_DEFAULT_COLOR,
+                stroke_width,
+                fill: "transparent",
+            }
+        }
+    }
+}
 
 #[component]
 pub fn BoardComponent(
@@ -77,6 +102,22 @@ pub fn BoardComponent(
         card_height + column_card_offset.y * d as f32
     } else {0.};
 
+    let stroke = 0.5f32 / 12. * 11.;
+
+    let circle_decor = {
+        let size = 18.;
+        let position = get_pos(DepotRole::Foundation.id(0), 0)
+            + Vec2::new(card_width, card_height) / 2. 
+            - Vec2::new(size, size) / 2.;
+        
+        rsx! {
+            Circle { 
+                position,
+                size, stroke,
+            }
+        }
+    };
+
     let moving_card = |p1: Vec2, p2: Vec2, card: Card| rsx! {
         Movement {
             src_translate_vec: p1 - p2,
@@ -135,6 +176,8 @@ pub fn BoardComponent(
             position: "absolute",
             top: rem(position.y),
             left: rem(position.x),
+
+            {circle_decor},
 
             for depot in 0..NUM_DEPOTS {
                 if let Some(hint) = get_hint(depot) {
