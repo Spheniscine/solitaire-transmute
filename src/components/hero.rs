@@ -41,18 +41,18 @@ pub fn Hero() -> Element {
         div {
             id: "hero",
             class: "select-none",
-            // if st.screen_state == ScreenState::Game {
-            //     BoardComponent { 
-            //         position: Vec2 { x: 0., y: 20. },
-            //         board: st.board.clone(),
-            //         skin: st.skin,
-            //         // onclick: move |pos| if clean {state.write().onclick(pos);},
-            //         // ondoubleclick: move |pos| if clean {state.write().ondoubleclick(pos);},
-            //         // oncontextmenu: move |pos| if clean {state.write().oncontextmenu(pos);},
-            //         animation_key: st.animation_key,
-            //         is_won: st.is_won(),
-            //     }
-            // }
+            if st.screen_state == ScreenState::Game {
+                BoardComponent { 
+                    position: Vec2 { x: 0., y: 20. },
+                    board: st.board.clone(),
+                    skin: st.skin,
+                    // onclick: move |pos| if clean {state.write().onclick(pos);},
+                    // ondoubleclick: move |pos| if clean {state.write().ondoubleclick(pos);},
+                    // oncontextmenu: move |pos| if clean {state.write().oncontextmenu(pos);},
+                    animation_key: st.animation_key,
+                    is_won: st.is_won(),
+                }
+            }
         }
     }
 }

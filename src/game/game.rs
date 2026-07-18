@@ -42,7 +42,7 @@ impl GameState {
     pub fn new_deal(rng: &mut impl Rng) -> Vec<Card> {
         let mut deck = Vec::with_capacity(DECK_SIZE);
         for rank in RANKS {
-            for suit in Suit::iter() {
+            for suit in Suit::iter_normal() {
                 deck.push(Card { rank, suit });
             }
         }
