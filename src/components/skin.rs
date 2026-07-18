@@ -16,7 +16,7 @@ impl Skin {
                 span {
                     font_family: font,
                     position: if !text_mode && (self.suits == SuitSkin::Alchemy || font == SYMBOLS_2_FONT_STR) {"relative"},
-                    top: if !text_mode && self.suits == SuitSkin::Alchemy {"0.04em"}
+                    top: if !text_mode && self.suits == SuitSkin::Alchemy {"0.03em"}
                     else if !text_mode && font == SYMBOLS_2_FONT_STR {"0.13em"},
                     {self.suits.suit_symbol(card.suit)}
                 }
