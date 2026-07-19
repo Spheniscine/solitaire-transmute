@@ -4,7 +4,7 @@ use rand::{Rng, seq::SliceRandom};
 use serde::{Deserialize, Serialize};
 use strum::IntoEnumIterator;
 
-use crate::game::{Board, BoardPos, Card, DECK_SIZE, DepotRole, RANKS, Skin, Suit};
+use crate::{components::LocalStorage, game::{Board, BoardPos, Card, DECK_SIZE, DepotRole, RANKS, Skin, Suit}};
 
 pub const ANIMATION_DURATION: Duration = Duration::from_millis(200);
 pub type AnimationKey = u16;
@@ -77,7 +77,7 @@ impl GameState {
         self.undo_stack.clear();
         self.already_won = false;
 
-        // if !self.is_busy() { LocalStorage.save_game_state(&self); }
+        if !self.is_busy() { LocalStorage.save_game_state(&self); }
     }
 
     pub fn is_busy(&self) -> bool {
@@ -120,6 +120,83 @@ impl GameState {
         }
     }
 
+    pub fn move_intent(&mut self, pos1: BoardPos, pos2: BoardPos, rev: bool) -> bool {
+        if pos1.depot_index == pos2.depot_index { return false; }
+        let depot1 = &self.board.depots[pos1.depot_index];
+        let depot2 = &self.board.depots[pos2.depot_index];
+        let num_moved = depot1.len() - pos1.card_index;
+        if pos2.card_index != depot2.len() { return false; }
+
+        let Some(role) = DepotRole::role(pos2.depot_index) else { return false };
+        let history_len = self.history.len();
+        match role {
+            DepotRole::Tableau => {
+                let card = if !rev { depot1[pos1.card_index] } else { *depot1.last().unwrap() };
+                let ok = depot2.last().is_none_or(|&c| self.can_stack(c, card));
+                if !ok { return false; }
+                self.do_move_raw(pos1, pos2, rev);
+            },
+            DepotRole::Foundation => {
+                let slice = &depot1[pos1.card_index ..];
+                let sort_rank = depot2.last().map(|c| c.rank).unwrap_or(0) + 1;
+                if !slice.iter().rev().map(|c| c.rank).eq((sort_rank..).take(slice.len())) {
+                    return false;
+                }
+                self.do_move_raw(pos1, pos2, true);
+            }
+            DepotRole::EngineIn => {
+                if num_moved != 1 || !depot2.is_empty() { return false; }
+                self.do_move_raw(pos1, pos2, rev);
+            }
+            DepotRole::EngineOut => return false,
+        }
+
+        self.undo_stack.push(history_len);
+        true
+    }
+
+    pub fn onclick(&mut self, pos: BoardPos) {
+        if self.is_busy() { return; }
+        if self.is_over() { return; }
+
+        if let Some(src) = self.board.selected {
+            if pos == src { 
+                self.board.selected = None; 
+                return;
+            }
+            if src.depot_index == pos.depot_index && self.can_select(pos) {
+                self.board.selected = Some(pos);
+                return;
+            }
+
+            let dest = BoardPos { depot_index: pos.depot_index, card_index: pos.card_index.wrapping_add(1) };
+            self.move_intent(src, dest, false);
+        } else {
+            if self.can_select(pos) {
+                self.board.selected = Some(pos);
+            }
+        }
+    }
+
+    // right-click is shortcut for reverse-stacking
+    pub fn oncontextmenu(&mut self, pos: BoardPos) {
+        if self.is_busy() { return; }
+        if self.is_over() { return; }
+
+        if let Some(src) = self.board.selected {
+            let dest = BoardPos { depot_index: pos.depot_index, card_index: pos.card_index.wrapping_add(1) };
+            self.move_intent(src, dest, true);
+        }
+    }
+
+    pub fn ondoubleclick(&mut self, pos: BoardPos) {
+        if self.is_busy() { return; }
+        if self.is_over() { return; }
+        if !self.can_select(pos) { return; } // needed, or illegal stacks can still be moved this way!
+
+        self.move_intent(pos, self.board.top_pos(DepotRole::Foundation.id(0)), false);
+    }
+
     pub fn is_won(&self) -> bool {
         self.board.depots[DepotRole::Foundation.id(0)].len() == 26
     }
@@ -132,7 +209,13 @@ impl GameState {
         if self.is_busy() { return; }
         if self.is_over() { return; }
 
-        // todo
+        use DepotRole::*;
+        if !self.board.depots[EngineOut.id(0)].is_empty() { return; }
+        let (Some(&card1), Some(&card2)) = 
+            (self.board.depots[EngineIn.id(0)].last(), self.board.depots[EngineIn.id(1)].last()) else {return};
+        if card1.suit == Suit::Wild || card2.suit == Suit::Wild { return; }
+        self.board.do_combine();
+        self.history.push(ActionRecord::Combine { card1, card2 });
     }
 
     pub fn advance_animations(&mut self, key: AnimationKey) {
@@ -150,6 +233,32 @@ impl GameState {
             self.check_auto_moves();
         }
 
-        // if !self.is_busy() { LocalStorage.save_game_state(&self); }
+        if !self.is_busy() { LocalStorage.save_game_state(&self); }
+    }
+
+    pub fn undo(&mut self) {
+        if self.is_busy() || !self.undo_possible() { return; }
+        let Some(target_len) = self.undo_stack.pop() else {return};
+        while self.history.len() > target_len {
+            let rec = self.history.pop().unwrap();
+            match rec {
+                ActionRecord::Move { pos1, pos2, rev } => {
+                    self.board.do_move(pos2, pos1, rev)
+                },
+                ActionRecord::Combine { card1, card2 } => {
+                    self.board.undo_combine(card1, card2);
+                },
+            }
+            self.board.advance_actions(); // no animation, as repeated card moves on same card causes problems
+        }
+        LocalStorage.save_game_state(&self);
+    }
+
+    pub fn restart(&mut self) {
+        if self.history.is_empty() || !self.undo_possible() { return; }
+        self.board = Board::from_deal(&self.deal);
+        self.history.clear();
+        self.undo_stack.clear();
+        LocalStorage.save_game_state(&self);
     }
 }
