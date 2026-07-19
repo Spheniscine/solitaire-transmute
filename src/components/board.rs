@@ -149,7 +149,7 @@ pub fn BoardComponent(
     let triangle_decor = {
         let size = card_width * 2. + spacer_x - 0.6;
         let position = Vec2::new(
-            get_pos(DepotRole::EngineIn.id(0), 0).x + 0.25,
+            get_pos(DepotRole::EngineIn.id(0), 0).x + 0.15,
             get_pos(DepotRole::EngineOut.id(0), 0).y + 2.,
         );
         
