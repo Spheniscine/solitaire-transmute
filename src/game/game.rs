@@ -3,7 +3,7 @@ use std::time::Duration;
 use rand::{Rng, seq::SliceRandom};
 use serde::{Deserialize, Serialize};
 
-use crate::{components::LocalStorage, game::{Board, BoardPos, Card, DECK_SIZE, DepotRole, RANKS, Skin, Suit}};
+use crate::{components::LocalStorage, game::{Board, BoardPos, Card, DECK_SIZE, DepotRole, RANKS, SettingsState, Skin, Suit}};
 
 pub const ANIMATION_DURATION: Duration = Duration::from_millis(200);
 pub type AnimationKey = u16;
@@ -258,6 +258,19 @@ impl GameState {
         self.board = Board::from_deal(&self.deal);
         self.history.clear();
         self.undo_stack.clear();
+        LocalStorage.save_game_state(&self);
+    }
+
+    pub fn new_settings_state(&self) -> SettingsState {
+        SettingsState {
+            allow_undo: self.allow_undo,
+            skin: self.skin,
+        }
+    }
+
+    pub fn apply_settings(&mut self, settings: &SettingsState){
+        self.allow_undo = settings.allow_undo;
+        self.skin = settings.skin;
         LocalStorage.save_game_state(&self);
     }
 }
