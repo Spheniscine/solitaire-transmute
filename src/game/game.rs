@@ -2,7 +2,6 @@ use std::time::Duration;
 
 use rand::{Rng, seq::SliceRandom};
 use serde::{Deserialize, Serialize};
-use strum::IntoEnumIterator;
 
 use crate::{components::LocalStorage, game::{Board, BoardPos, Card, DECK_SIZE, DepotRole, RANKS, Skin, Suit}};
 

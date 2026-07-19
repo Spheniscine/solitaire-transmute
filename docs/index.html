@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Transmutation Solitaire</title>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8" />
+  <link rel="preload" as="script" href="/solitaire-transmute/assets/solitaire-transmute-e25f1b78461ed905.js" crossorigin><link rel="preload" as="fetch" type="application/wasm" href="/solitaire-transmute/assets/solitaire-transmute_bg-82ccc036ee0537f4.wasm" crossorigin></head>
+  <body>
+    <div id="main"></div>
+  <script>
+            // We can't use a module script here because we need to start the script immediately when streaming
+            import("/solitaire-transmute/assets/solitaire-transmute-e25f1b78461ed905.js").then(
+                ({ default: init }) => {
+                init("/solitaire-transmute/assets/solitaire-transmute_bg-82ccc036ee0537f4.wasm").then((wasm) => {
+                    if (wasm.__wbindgen_start == undefined) {
+                    wasm.main();
+                    }
+                });
+                }
+            );
+            </script>
+            
+            </body>
+</html>
