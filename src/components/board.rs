@@ -71,8 +71,6 @@ pub fn BoardComponent(
     animation_key: AnimationKey,
     #[props(default)]
     is_won: bool,
-    #[props(default)]
-    is_lost: bool,
 ) -> Element {
     let card_width = 11f32;
     let card_height = card_width * CARD_HEIGHT_RATIO;
